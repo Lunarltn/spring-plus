@@ -52,10 +52,19 @@ public class TodoService {
         );
     }
 
-    public Page<TodoResponse> getTodos(int page, int size) {
+    public Page<TodoResponse> getTodos(String weather, LocalDate startDate, LocalDate endDate, int page, int size) {
         Pageable pageable = PageRequest.of(page - 1, size);
 
-        Page<Todo> todos = todoRepository.findAllByOrderByModifiedAtDesc(pageable);
+        LocalDateTime startDateTime = null;
+        LocalDateTime endDateTime = null;
+        if(startDate != null) {
+            startDateTime = startDate.atStartOfDay();
+        }
+        if(endDate != null) {
+            endDateTime = endDate.atTime(LocalTime.MAX);
+        }
+
+        Page<Todo> todos = todoRepository.findAllByOrderByModifiedAtDesc(weather, startDateTime, endDateTime, pageable);
 
         return todos.map(todo -> new TodoResponse(
                 todo.getId(),
