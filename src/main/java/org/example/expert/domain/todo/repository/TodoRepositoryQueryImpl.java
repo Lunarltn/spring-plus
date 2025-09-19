@@ -5,6 +5,7 @@ import static org.example.expert.domain.user.entity.QUser.user;
 
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.Projections;
+import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -71,7 +72,10 @@ public class TodoRepositoryQueryImpl implements TodoRepositoryQuery {
                 .limit(pageable.getPageSize())
                 .fetch();
 
+        JPAQuery<Long> totalQuery = jpaQueryFactory
+                .select(todo.count())
+                .from(todo);
 
-        return PageableExecutionUtils.getPage(list, pageable, () -> (long) list.size());
+        return PageableExecutionUtils.getPage(list, pageable, totalQuery::fetchOne);
     }
 }
