@@ -28,6 +28,8 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class JwtFilter extends OncePerRequestFilter {
 
+    private final String[] whiteList = {"/auth"};
+
     private final JwtUtil jwtUtil;
     private final ObjectMapper objectMapper;
 
@@ -37,14 +39,21 @@ public class JwtFilter extends OncePerRequestFilter {
             @NonNull HttpServletResponse httpResponse,
             @NonNull FilterChain chain
     ) throws IOException, ServletException {
-        String authorizationHeader = httpRequest.getHeader("Authorization");
+        String requestURI = httpRequest.getRequestURI();
 
-        if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
-            chain.doFilter(httpRequest, httpResponse);
-            return;
+        for(String list : whiteList){
+            if(requestURI.startsWith(list)){
+                chain.doFilter(httpRequest, httpResponse);
+                return;
+            }
         }
-        String jwt = jwtUtil.substringToken(authorizationHeader);
 
+        String authorizationHeader = httpRequest.getHeader("Authorization");
+        if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
+            sendErrorResponse(httpResponse, HttpStatus.UNAUTHORIZED, "유효하지 않는 JWT 서명입니다.");
+        }
+
+        String jwt = jwtUtil.substringToken(authorizationHeader);
         if(!processAuthentication(jwt, httpRequest, httpResponse)){
             return;
         }
